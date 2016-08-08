@@ -123,6 +123,29 @@ var List=React.createClass({
         var listArr=arr.slice(0,index).concat(arr.slice(index+1,arr.length));
         this.props.del(listArr);
     },
+    handleDblclick:function(e){
+        var nodeName=e.target.nodeName;
+        if(nodeName=="LI"){
+            var liEl=$(e.target);
+        }else if(nodeName=="DIV"||nodeName=="INPUT"){
+            var liEl=$(e.target).parents("li");
+        }
+        if(liEl){
+            liEl.find("label").addClass("fn-hide");
+            liEl.find("input[type='text']").removeClass("fn-hide");
+        }
+
+    },
+    handleBlur:function(e){
+        var thisEl=$(e.target);
+        var index=thisEl.parents("li").attr("data-index");
+        var arr=this.props.list;
+        thisEl.prev().removeClass("fn-hide");
+        thisEl.addClass("fn-hide");
+        arr[index].content=$(e.target).val();
+        this.props.editCallBack(arr);
+
+    },
     render:function(){
         var listArr=[],arr=this.props.list;
         var self=this;
@@ -133,11 +156,11 @@ var List=React.createClass({
                     listArr.push(
                         <li className="todo" key={index} data-index={index}>
                             <div className="view">
-                                <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
-                                <label className="content line">{list.content}</label>
+                                <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive} defaultChecked/>
+                                <label className="content line">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
                                 <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
                             </div>
-                            <input className="edit fn-hide" type="text"/>
+
                         </li>
                     );
                 }else{
@@ -145,10 +168,10 @@ var List=React.createClass({
                         <li className="todo" key={index} data-index={index}>
                             <div className="view">
                                 <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
-                                <label className="content">{list.content}</label>
+                                <label className="content">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
                                 <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
                             </div>
-                            <input className="edit fn-hide" type="text"/>
+
                         </li>
                     );
                 }
@@ -163,10 +186,10 @@ var List=React.createClass({
                     <li className="todo" key={index} data-index={index}>
                         <div className="view">
                             <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
-                            <label className="content">{list.content}</label>
+                            <label className="content">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
                             <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
                         </div>
-                        <input className="edit fn-hide" type="text"/>
+
                     </li>
                 );
             });
@@ -178,11 +201,11 @@ var List=React.createClass({
                 listArr.push(
                     <li className="todo" key={index} data-index={index}>
                         <div className="view">
-                            <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
-                            <label className="content line">{list.content}</label>
+                            <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive} defaultChecked />
+                            <label className="content line">{list.content}</label> <input className="edit fn-hide" type="text" defaultValue={list.content} onBlur={self.handleBlur}/>
                             <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
                         </div>
-                        <input className="edit fn-hide" type="text"/>
+
                     </li>
                 );
             });
@@ -191,7 +214,7 @@ var List=React.createClass({
         return(
             <div>
                 <input className="toggle-all" type="checkbox" onChange={this.handleAllChangeIsActive} changeAllComCallBack={this.props.changeAllComCallBack}/>
-                <ul className="listBox" ref="toListBox">
+                <ul className="listBox" ref="toListBox" onDoubleClick ={this.handleDblclick}>
                     {listArr}
                 </ul>
                 <Filter list={this.props.list} changeType={this.props.changeType} clearComCallBack={this.props.clearComCallBack}/>
@@ -221,7 +244,7 @@ var App=React.createClass({
             <div>
                 <h1 className="header">todos</h1>
                 <Form newTodo={this.changeArrCallback} list={this.state.arr}/>
-                <List list={this.state.arr} newTodo={this.changeArrCallback} del={this.changeArrCallback} changeIsActive={this.changeArrCallback} type={this.state.type} changeType={this.changeTypeCallback} clearComCallBack={this.changeArrCallback} changeAllComCallBack={this.changeArrCallback}/>
+                <List list={this.state.arr} newTodo={this.changeArrCallback} del={this.changeArrCallback} changeIsActive={this.changeArrCallback} type={this.state.type} changeType={this.changeTypeCallback} clearComCallBack={this.changeArrCallback} changeAllComCallBack={this.changeArrCallback} editCallBack={this.changeArrCallback}/>
             </div>
         )
     }

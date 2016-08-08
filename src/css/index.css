@@ -109,8 +109,12 @@ body {
   float: right;
   color: #f50;
 }
-.content {
+.content,
+.edit {
   margin-left: 15px;
+}
+.edit {
+  width: 85%;
 }
 .line {
   text-decoration: line-through;
