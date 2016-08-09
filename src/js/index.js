@@ -62,7 +62,7 @@ var Filter=React.createClass({
        }
 
         return(
-            <footer className="footer">
+            <footer className="footer fn-clear">
                 <span className="todo-count">
                     <strong>{n}</strong> item left
                 </span>

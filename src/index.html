@@ -2,8 +2,130 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
     <title>Todo-MVC</title>
-    <link rel="stylesheet" href="css/index.css"/>
+    <!--<link rel="stylesheet" href="css/index.css"/>-->
+    <style>
+        *{margin:0;padding:0;}
+        li,
+        ol,
+        ul {
+            list-style: none;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        body {
+            font-family: "微软雅黑", tahoma, arial, Hiragino Sans GB, '\5b8b\4f53', sans-serif;
+            padding-top: 100px;
+            font-size: 14px;
+        }
+        .fn-hide {
+            display: none;
+        }
+        /*清除浮动*/
+        .fn-clear {
+            zoom: 1;
+        }
+        .fn-clear:before {
+            content: "";
+            display: table;
+        }
+        .fn-clear:after {
+            visibility: hidden;
+            display: block;
+            font-size: 0;
+            content: " ";
+            clear: both;
+            height: 0;
+        }
+        .borderbox {
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            -o-box-sizing: border-box;
+            -ms-box-sizing: border-box;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+        }
+        .header {
+            text-align: center;
+        }
+        .new-todoBox {
+            padding: 10px 25px;
+            border-bottom: 1px solid #ccc;
+        }
+        .new-todo {
+            border: none;
+            outline: none;
+            height: 40px;
+        }
+        .listBox li {
+            padding: 15px 25px;
+            border-bottom: 1px solid #ccc;
+            padding-left: 5px;
+        }
+        .listBox li:hover .destroy {
+            display: inline-block;
+        }
+        .destroy {
+            float: right;
+            color: #f50;
+        }
+        .content,
+        .edit {
+            margin-left: 15px;
+        }
+        .edit {
+            width: 85%;
+        }
+        .line {
+            text-decoration: line-through;
+        }
+        .toggle {
+            vertical-align: middle;
+        }
+        .toggle-all {
+            position: relative;
+            top: -39px;
+            left: 5px;
+        }
+        .footer {
+            padding: 10px 5px;
+            padding-top: 0;
+        }
+        .filters {
+            margin-left: 5%;
+            float: left;
+            margin-top: 10px;
+        }
+        .filters li {
+            float: left;
+            margin: 0 10px;
+        }
+        .filters li a {
+            text-decoration: none;
+        }
+        .filters li a:active {
+            text-decoration: underline;
+        }
+        .filters li a.selected {
+            text-decoration: underline;
+        }
+        .todo-count {
+            float: left;
+            margin-top: 10px;
+        }
+        .clear-completed {
+            float: left;
+            margin-top: 10px;
+            margin-right: 3px;
+        }
+
+    </style>
     <script src="react/react.js"></script>
     <script src="react/react-dom.js"></script>
     <script src="react/browser.min.js"></script>
@@ -13,5 +135,263 @@
 <body>
 <div id="container" class="container"></div>
 </body>
-<script src="js/index.js" type="text/babel"></script>
+<!--<script src="js/index.js" type="text/babel"></script>-->
+<script type="text/babel">
+    var Form=React.createClass({
+    handleKeyPress:function(e){
+        var code=e.nativeEvent.keyCode;
+        var listArr=this.props.list;
+        if(code==13){
+            var content=$(e.target).val().trim();
+            if(content==""){
+                return;
+            }
+            listArr.push({"content":content,"isActive":true});
+            this.props.newTodo(listArr);
+            $(e.target).val("");
+        }
+    },
+    render:function(){
+        return(
+            <div className="new-todoBox">
+                <input className="new-todo" autofocus="" autocomplete="off" placeholder="What needs to be done?" onKeyPress={this.handleKeyPress}/>
+            </div>
+        )
+    }
+});
+
+var Filter=React.createClass({
+    handleFiltIsActive:function(e){
+        if(e.target.nodeName==="A"){
+            var thisEl=$(e.target);
+            var value=thisEl.attr("href").slice(2);
+
+            $(this.refs.filters).find("a").removeClass("selected");
+            thisEl.addClass("selected");
+
+            //console.log(value);
+            this.props.changeType(value);
+        }
+
+    },
+    handleClear:function(){
+        var arr=this.props.list;
+        var newArr=[];
+        arr.map(function(list){
+            if(list.isActive){
+                newArr.push({"content":list.content,"isActive":true});
+            }
+        });
+        this.props.clearComCallBack(newArr);
+    },
+    render:function(){
+        var arr=this.props.list;
+        var n=0;
+        var countCompleted=0,countCompletedArr=[];
+        for(var i=0;i<arr.length;i++){
+            if(arr[i].isActive){++n;}
+            if(!arr[i].isActive){++countCompleted;}
+        }
+       if(countCompleted>0){
+           countCompletedArr.push(
+               <button className="clear-completed" onClick={this.handleClear} key="btn">
+                   Clear completed
+               </button>
+           );
+       }
+
+        return(
+            <footer className="footer fn-clear">
+                <span className="todo-count">
+                    <strong>{n}</strong> item left
+                </span>
+                <ul className="filters fn-clear" onClick={this.handleFiltIsActive} ref="filters">
+                    <li><a href="#/all" className="selected">All</a></li>
+                    <li><a href="#/active">Active</a></li>
+                    <li><a href="#/completed">Completed</a></li>
+                </ul>
+                {countCompletedArr}
+            </footer>
+        )
+
+    }
+});
+
+var List=React.createClass({
+    handleChangeIsActive:function(e){
+        var thisEl=$(e.target);
+        var index=thisEl.parents("li").attr("data-index");
+        var arr=this.props.list;
+        if(thisEl.get(0).checked){
+            thisEl.next().addClass("line");
+            arr[index].isActive=false;
+        }else{
+            thisEl.next().removeClass("line");
+            arr[index].isActive=true;
+        }
+        this.props.changeIsActive(arr);
+    },
+    handleAllChangeIsActive:function(e){
+        var arr=this.props.list,newArr=[];
+        if($(e.target).get(0).checked){
+            //全部变成completed
+            $(this.refs.toListBox).find("label").addClass("line");
+            $(this.refs.toListBox).find("input[type='checkbox']").attr("checked", true);
+            for(var i=0;i<arr.length;i++){
+                newArr.push({
+                    "content":arr[i].content,
+                    "isActive":false
+                })
+            }
+
+        }else{
+            $(this.refs.toListBox).find("label").removeClass("line");
+            $(this.refs.toListBox).find("input[type='checkbox']").attr("checked", false);
+            for(var i=0;i<arr.length;i++){
+                newArr.push({
+                    "content":arr[i].content,
+                    "isActive":true
+                })
+            }
+        }
+        this.props.changeAllComCallBack(newArr);
+    },
+    handleDel:function(e){
+        var arr=this.props.list;
+        var index=$(e.target).attr("data-index");
+        var listArr=arr.slice(0,index).concat(arr.slice(index+1,arr.length));
+        this.props.del(listArr);
+    },
+    handleDblclick:function(e){
+        var nodeName=e.target.nodeName;
+        if(nodeName=="LI"){
+            var liEl=$(e.target);
+        }else if(nodeName=="DIV"||nodeName=="INPUT"){
+            var liEl=$(e.target).parents("li");
+        }
+        if(liEl){
+            liEl.find("label").addClass("fn-hide");
+            liEl.find("input[type='text']").removeClass("fn-hide");
+        }
+
+    },
+    handleBlur:function(e){
+        var thisEl=$(e.target);
+        var index=thisEl.parents("li").attr("data-index");
+        var arr=this.props.list;
+        thisEl.prev().removeClass("fn-hide");
+        thisEl.addClass("fn-hide");
+        arr[index].content=$(e.target).val();
+        this.props.editCallBack(arr);
+
+    },
+    render:function(){
+        var listArr=[],arr=this.props.list;
+        var self=this;
+        var type=this.props.type;
+        if(type==="all"){
+            arr.map(function(list,index){
+                if(!list.isActive){
+                    listArr.push(
+                        <li className="todo" key={index} data-index={index}>
+                            <div className="view">
+                                <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive} defaultChecked/>
+                                <label className="content line">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
+                                <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
+                            </div>
+
+                        </li>
+                    );
+                }else{
+                    listArr.push(
+                        <li className="todo" key={index} data-index={index}>
+                            <div className="view">
+                                <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
+                                <label className="content">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
+                                <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
+                            </div>
+
+                        </li>
+                    );
+                }
+
+            });
+        }else if(type==="active"){
+            arr.map(function(list,index){
+                if(!list.isActive){
+                    return;
+                }
+                listArr.push(
+                    <li className="todo" key={index} data-index={index}>
+                        <div className="view">
+                            <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive}/>
+                            <label className="content">{list.content}</label><input className="edit fn-hide" type="text" onBlur={self.handleBlur} defaultValue={list.content}/>
+                            <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
+                        </div>
+
+                    </li>
+                );
+            });
+        }else if(type==="completed"){
+            arr.map(function(list,index){
+                if(list.isActive){
+                    return;
+                }
+                listArr.push(
+                    <li className="todo" key={index} data-index={index}>
+                        <div className="view">
+                            <input className="toggle" type="checkbox" onChange={self.handleChangeIsActive} defaultChecked />
+                            <label className="content line">{list.content}</label> <input className="edit fn-hide" type="text" defaultValue={list.content} onBlur={self.handleBlur}/>
+                            <button className="destroy fn-hide" onClick={self.handleDel} data-index={index}>X</button>
+                        </div>
+
+                    </li>
+                );
+            });
+        }
+
+        return(
+            <div>
+                <input className="toggle-all" type="checkbox" onChange={this.handleAllChangeIsActive} changeAllComCallBack={this.props.changeAllComCallBack}/>
+                <ul className="listBox" ref="toListBox" onDoubleClick ={this.handleDblclick}>
+                    {listArr}
+                </ul>
+                <Filter list={this.props.list} changeType={this.props.changeType} clearComCallBack={this.props.clearComCallBack}/>
+            </div>
+        )
+
+    }
+});
+
+var App=React.createClass({
+    getInitialState:function(){
+        return{
+            arr:[],
+            type:"all"
+        }
+    },
+    changeArrCallback:function(arr){
+        this.setState({arr:arr});
+    },
+    changeTypeCallback:function(text){
+        //console.log(this.state.type);
+        this.setState({type:text});
+
+    },
+    render:function(){
+        return(
+            <div>
+                <h1 className="header">todos</h1>
+                <Form newTodo={this.changeArrCallback} list={this.state.arr}/>
+                <List list={this.state.arr} newTodo={this.changeArrCallback} del={this.changeArrCallback} changeIsActive={this.changeArrCallback} type={this.state.type} changeType={this.changeTypeCallback} clearComCallBack={this.changeArrCallback} changeAllComCallBack={this.changeArrCallback} editCallBack={this.changeArrCallback}/>
+            </div>
+        )
+    }
+});
+
+ReactDOM.render(<App/>,document.getElementById("container"));
+
+
+
+</script>
 </html>
