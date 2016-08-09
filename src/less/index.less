@@ -52,7 +52,7 @@ body{
 }
 
 .container{
-  width:500px;
+  width:80%;
   margin:0 auto;
   border:1px solid @gray;
 }
@@ -102,11 +102,14 @@ body{
 
 .footer{
   padding:10px 5px;
+  padding-top:0;
 }
 .filters{
-  display: inline-block;
-  margin:0 60px;
-  vertical-align: middle;
+  //display: inline-block;
+  //vertical-align: middle;
+  margin-left:5%;
+  float:left;
+  margin-top:10px;
 }
 .filters li{
   float:left;
@@ -120,4 +123,13 @@ body{
 }
 .filters li a.selected{
   text-decoration: underline;
+}
+.todo-count{
+  float:left;
+  margin-top:10px;
+}
+.clear-completed{
+  float:left;
+  margin-top:10px;
+  margin-right:3px;
 }
